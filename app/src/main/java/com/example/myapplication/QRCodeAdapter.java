@@ -9,11 +9,14 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class QRCodeAdapter extends RecyclerView.Adapter<QRCodeAdapter.QRCodeViewHolder> {
 
     private final List<String> qrCodes = new ArrayList<>();
+    private final Set<String> seenCodes = new HashSet<>(); // 只保存原始二维码内容
 
     @NonNull
     @Override
@@ -35,18 +38,24 @@ public class QRCodeAdapter extends RecyclerView.Adapter<QRCodeAdapter.QRCodeView
     }
 
     // 添加新二维码到列表顶端
-    public void addQRCode(String code) {
-        if (qrCodes.contains(code)) {
-            return;
+    public void addQRCode(Set<String> codes) {
+        boolean update = false;
+        for (String code : codes) {
+            if (seenCodes.add(code)) {
+                qrCodes.add(0, String.format("%s.%s", qrCodes.size() + 1, code)); // 最新的显示在最上面
+                update = true;
+            }
         }
-        qrCodes.add(0, String.format("%s.%s", qrCodes.size(), code)); // 最新的显示在最上面
-        notifyItemInserted(0);
+        if (update) {
+            notifyItemInserted(0);
+        }
     }
 
     public void clear() {
         int size = qrCodes.size();
+        qrCodes.clear();
+        seenCodes.clear();
         if (size > 0) {
-            qrCodes.clear();
             notifyItemRangeRemoved(0, size);
         }
     }

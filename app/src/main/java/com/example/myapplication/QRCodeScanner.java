@@ -47,11 +47,13 @@ public class QRCodeScanner {
     private final PreviewView previewView;
     private Size targetResolution = new Size(1280, 720);
     private CameraSelector cameraSelector;
-    private Set<String> codes = new HashSet<>();
     private boolean isCameraInitialized = false;
 
+    private final Set<String> scannedCodes = new HashSet<>(); // 全局已识别的码
+
     public interface QRCodeCallback {
-        void onQRCodeDetected(String qrCode);
+        void onQRCodeDetected(Set<String> qrCode);
+
         void onError(String error);
     }
 
@@ -98,7 +100,6 @@ public class QRCodeScanner {
 
         if (!scanning) {
             scanning = true;
-            codes.clear();
 
             if (imageAnalysis != null) {
                 imageAnalysis.setAnalyzer(cameraExecutor, this::processImageProxy);
@@ -115,6 +116,7 @@ public class QRCodeScanner {
      **/
     public void stopScanning() {
         scanning = false;
+        scannedCodes.clear();
 
         if (imageAnalysis != null) {
             imageAnalysis.clearAnalyzer(); // 停止分析
@@ -198,12 +200,16 @@ public class QRCodeScanner {
 
             barcodeScanner.process(image)
                     .addOnSuccessListener(barcodes -> {
+                        Set<String> codes = new HashSet<>();
                         for (Barcode barcode : barcodes) {
                             String value = barcode.getRawValue();
-                            if (value != null && callback != null && !codes.contains(value)) {
+                            if (value != null && !scannedCodes.contains(value)) {
                                 codes.add(value);
-                                callback.onQRCodeDetected(value);
+                                scannedCodes.add(value);
                             }
+                        }
+                        if (!codes.isEmpty() && callback != null) {
+                            callback.onQRCodeDetected(codes);
                         }
                     })
                     .addOnFailureListener(e -> postError("扫码失败: " + e.getMessage()))

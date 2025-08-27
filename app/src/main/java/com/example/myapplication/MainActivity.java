@@ -17,6 +17,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.mlkit.vision.barcode.common.Barcode;
 
+import java.util.Set;
+
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
@@ -50,9 +52,9 @@ public class MainActivity extends AppCompatActivity {
 
         scanner.setCallback(new QRCodeScanner.QRCodeCallback() {
             @Override
-            public void onQRCodeDetected(String qrCode) {
+            public void onQRCodeDetected(Set<String> qrCodes) {
                 runOnUiThread(() -> {
-                    adapter.addQRCode(qrCode);
+                    adapter.addQRCode(qrCodes);
                 });
             }
 
